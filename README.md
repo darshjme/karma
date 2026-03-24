@@ -4,20 +4,15 @@
 
 # agent-workflow
 
-**DAG-based workflow orchestration for LLM agents. Zero external dependencies.**
+**Multi-step workflow orchestration for LLM agents**
 
-[![PyPI](https://img.shields.io/pypi/v/agent-workflow?color=blue)](https://pypi.org/project/agent-workflow/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen)](pyproject.toml)
+[![PyPI version](https://img.shields.io/pypi/v/agent-workflow?color=blue&style=flat-square)](https://pypi.org/project/agent-workflow/) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://python.org) [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE) [![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square)](#)
 
 ---
 
 ## The Problem
 
-Production LLM agents fail silently. Without dag-based workflow orchestration, you get undefined behaviour at scale — race conditions, lost state, cascading failures, and no way to debug what went wrong.
-
-`agent-workflow` gives you a production-ready dag-based workflow orchestration primitive with a clean API, tested edge cases, and zero configuration.
+Without orchestration, multi-step agent pipelines degenerate into tangled callback chains — steps run out of order, failed tasks block downstream work silently, and retrying a half-completed run means starting from scratch. Debugging becomes archaeology.
 
 ## Installation
 
@@ -25,88 +20,88 @@ Production LLM agents fail silently. Without dag-based workflow orchestration, y
 pip install agent-workflow
 ```
 
-Or from source:
-
-```bash
-git clone https://github.com/darshjme/agent-workflow.git
-cd agent-workflow
-pip install -e .
-```
-
 ## Quick Start
 
 ```python
-from agent_workflow import *  # see API reference below
+from agent_workflow import DAGValidator, WorkflowEngine, WorkflowResult
 
-# See examples/ directory for complete working examples
+# Initialise
+instance = DAGValidator(name="my_agent")
+
+# Use
+result = instance.run()
+print(result)
 ```
 
 ## API Reference
 
-The main classes and functions are defined in `agent_workflow/__init__.py`.
+### `DAGValidator`
 
-Key exports: `DAG execution · topological sort · parallel steps · cycle detection`
+```python
+class DAGValidator:
+    """Validates and sorts a directed acyclic graph of tasks.
+    def has_cycle(tasks: dict) -> bool:
+        """Return ``True`` if the dependency graph contains a cycle.
+```
 
-All classes follow a consistent interface:
-- Instantiate with sensible defaults
-- Compose with other arsenal libraries
-- Zero external dependencies required
+### `WorkflowEngine`
 
-See the source code and `tests/` directory for verified usage examples.
+```python
+class WorkflowEngine:
+    """Executes a Workflow, respecting dependencies and conditions."""
+    def __init__(self, workflow: Workflow) -> None:
+    def run(self, context: dict | None = None) -> WorkflowResult:
+        """Execute the full workflow and return a WorkflowResult."""
+```
+
+### `WorkflowResult`
+
+```python
+class WorkflowResult:
+    """Immutable record of a completed workflow run."""
+    def to_dict(self) -> dict:
+    def __repr__(self) -> str:
+```
+
 
 ## How It Works
 
+### Flow
+
 ```mermaid
 flowchart LR
-    A[Agent Task] --> B[agent-workflow]
-    B --> C{Decision}
-    C -->|success| D[✅ Result]
-    C -->|failure| E[⚠️ Handle]
-    E --> B
-
-    style B fill:#161b22,stroke:#8957e5,stroke-width:2,color:#8957e5
-    style D fill:#1a3320,stroke:#238636,color:#3fb950
-    style E fill:#3d1a1a,stroke:#f85149,color:#f85149
+    A[User Code] -->|create| B[DAGValidator]
+    B -->|configure| C[WorkflowEngine]
+    C -->|execute| D{Success?}
+    D -->|yes| E[Return Result]
+    D -->|no| F[Error Handler]
+    F --> G[Fallback / Retry]
+    G --> C
 ```
+
+### Sequence
 
 ```mermaid
 sequenceDiagram
-    participant Agent
-    participant AgentWorkflow as agent-workflow
-    participant Output
+    participant App
+    participant DAGValidator
+    participant WorkflowEngine
 
-    Agent->>AgentWorkflow: initialize()
-    AgentWorkflow-->>Agent: ready
-
-    loop Agent Run
-        Agent->>AgentWorkflow: process(input)
-        AgentWorkflow-->>Agent: result
-    end
-
-    Agent->>Output: deliver(result)
+    App->>+DAGValidator: initialise()
+    DAGValidator->>+WorkflowEngine: configure()
+    WorkflowEngine-->>-DAGValidator: ready
+    App->>+DAGValidator: run(context)
+    DAGValidator->>+WorkflowEngine: execute(context)
+    WorkflowEngine-->>-DAGValidator: result
+    DAGValidator-->>-App: WorkflowResult
 ```
 
 ## Philosophy
 
-The Mahabharata was not written in one sitting — it was a DAG of 18 books, each a dependency of the next. agent-workflow brings that order to your agents.
+> Like the *karma-yoga* of the Gita — act without attachment to outcome; each step performs its duty and passes the torch.
 
 ---
 
-## Part of the Arsenal
-
-`agent-workflow` is one of six production libraries for LLM agents:
-
-| Library | Purpose |
-|---------|---------|
-| [herald](https://github.com/darshjme/herald) | Semantic task routing |
-| [engram](https://github.com/darshjme/engram) | Agent memory |
-| [sentinel](https://github.com/darshjme/sentinel) | ReAct loop guards |
-| [verdict](https://github.com/darshjme/verdict) | Agent evaluation |
-| [agent-guardrails](https://github.com/darshjme/agent-guardrails) | Output validation |
-| [agent-observability](https://github.com/darshjme/agent-observability) | Tracing & metrics |
-
-→ [arsenal](https://github.com/darshjme/arsenal) — the complete stack
-
----
+*Part of the [arsenal](https://github.com/darshjme/arsenal) — production stack for LLM agents.*
 
 *Built by [Darshankumar Joshi](https://github.com/darshjme), Gujarat, India.*
