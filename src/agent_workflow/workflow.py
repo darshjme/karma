@@ -1,203 +1,112 @@
-"""Workflow and WorkflowResult — DAG-based orchestration engine."""
+"""Workflow — a DAG of WorkflowSteps."""
 
 from __future__ import annotations
+from typing import Callable
 
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
-from typing import Any, Optional
-
-from .dag import DAGValidator
-from .task import Task, TaskResult
-
-
-@dataclass
-class WorkflowResult:
-    """Result of a complete workflow execution."""
-
-    success: bool
-    task_results: dict[str, TaskResult]
-    duration_ms: float
-    failed_tasks: list[str]
-
-    def to_dict(self) -> dict:
-        return {
-            "success": self.success,
-            "task_results": {k: v.to_dict() for k, v in self.task_results.items()},
-            "duration_ms": self.duration_ms,
-            "failed_tasks": self.failed_tasks,
-        }
+from .step import WorkflowStep
 
 
 class Workflow:
-    """DAG-based workflow that executes tasks in dependency order.
+    """Directed Acyclic Graph of workflow steps."""
 
-    Independent tasks (no unresolved dependencies at a given wave) are run
-    in parallel using a :class:`~concurrent.futures.ThreadPoolExecutor`.
-
-    Parameters
-    ----------
-    name:
-        Human-readable workflow identifier.
-    max_workers:
-        Maximum thread-pool size for parallel task execution.
-    """
-
-    def __init__(self, name: str, max_workers: int = 8) -> None:
-        if not name:
+    def __init__(self, name: str) -> None:
+        if not name or not isinstance(name, str):
             raise ValueError("Workflow name must be a non-empty string.")
-        self._name = name
-        self._tasks: dict[str, Task] = {}
-        self._max_workers = max_workers
+        self.name = name
+        self._steps: dict[str, WorkflowStep] = {}
 
-    # ------------------------------------------------------------------ #
-    # Public API
-    # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------------
+    # Building
+    # ------------------------------------------------------------------
 
-    @property
-    def name(self) -> str:
-        return self._name
-
-    def add_task(self, task: Task) -> "Workflow":
-        """Register a task and return *self* for fluent chaining."""
-        if not isinstance(task, Task):
-            raise TypeError(f"Expected Task, got {type(task)!r}.")
-        if task.name in self._tasks:
-            raise ValueError(f"Task '{task.name}' is already registered.")
-        self._tasks[task.name] = task
+    def add(self, step: WorkflowStep) -> "Workflow":
+        """Add a step to the workflow. Fluent interface. Raises on duplicates."""
+        if not isinstance(step, WorkflowStep):
+            raise TypeError("Expected a WorkflowStep instance.")
+        if step.name in self._steps:
+            raise ValueError(f"Step '{step.name}' already exists in workflow '{self.name}'.")
+        # Validate referenced dependencies exist (warn-only if added later; strict on run)
+        self._steps[step.name] = step
         return self
 
-    def validate(self) -> list[str]:
-        """Return a list of validation error strings (empty = valid)."""
-        errors: list[str] = []
+    def step(
+        self,
+        name: str,
+        depends_on: list[str] | None = None,
+        condition: Callable[[dict], bool] | None = None,
+        metadata: dict | None = None,
+    ) -> Callable:
+        """Decorator factory that creates and registers a WorkflowStep."""
+        def decorator(fn: Callable) -> Callable:
+            self.add(WorkflowStep(
+                name=name,
+                handler=fn,
+                depends_on=depends_on,
+                condition=condition,
+                metadata=metadata,
+            ))
+            return fn
+        return decorator
 
-        missing = DAGValidator.find_missing_deps(self._tasks)
-        for m in missing:
-            errors.append(f"Missing dependency: {m}")
+    # ------------------------------------------------------------------
+    # Querying
+    # ------------------------------------------------------------------
 
-        if not missing and DAGValidator.has_cycle(self._tasks):
-            errors.append("Cycle detected in the dependency graph.")
+    @property
+    def steps(self) -> dict[str, WorkflowStep]:
+        return self._steps
 
-        return errors
+    def ready_steps(self, context: dict | None = None) -> list[WorkflowStep]:
+        """Return steps whose dependencies are complete and conditions pass."""
+        completed = {
+            s.name for s in self._steps.values() if s.status == "completed"
+        }
+        # Also include skipped steps as "unblocking" (their dependents can proceed)
+        skipped = {
+            s.name for s in self._steps.values() if s.status == "skipped"
+        }
+        resolved = completed | skipped
+        return [
+            s for s in self._steps.values()
+            if s.is_ready(resolved, context)
+        ]
 
-    def task_order(self) -> list[str]:
-        """Return task names in a valid topological execution order."""
-        errors = self.validate()
-        if errors:
-            raise ValueError(
-                "Workflow is invalid — fix errors before ordering:\n"
-                + "\n".join(errors)
-            )
-        return DAGValidator.topological_sort(self._tasks)
+    @property
+    def is_complete(self) -> bool:
+        """True when every step is in a terminal state."""
+        terminal = {"completed", "failed", "skipped"}
+        return all(s.status in terminal for s in self._steps.values())
 
-    def run(self, context: Optional[dict] = None) -> WorkflowResult:
-        """Execute the workflow.
+    @property
+    def is_failed(self) -> bool:
+        """True when any step has failed."""
+        return any(s.status == "failed" for s in self._steps.values())
 
-        Tasks with all dependencies satisfied are dispatched in parallel.
-        If a task fails its result is recorded, all tasks that (transitively)
-        depend on it are skipped, and execution continues for unaffected
-        branches.
+    def summary(self) -> dict:
+        """Return status counts and workflow metadata."""
+        counts: dict[str, int] = {}
+        for s in self._steps.values():
+            counts[s.status] = counts.get(s.status, 0) + 1
+        return {
+            "workflow": self.name,
+            "total": len(self._steps),
+            "status_counts": counts,
+        }
 
-        Parameters
-        ----------
-        context:
-            Shared dictionary passed as the first argument to every task
-            function.  Defaults to an empty dict.
-        """
-        if context is None:
-            context = {}
+    def reset(self) -> None:
+        """Reset all steps for a fresh run."""
+        for s in self._steps.values():
+            s.reset()
 
-        errors = self.validate()
-        if errors:
-            raise ValueError(
-                "Cannot run an invalid workflow:\n" + "\n".join(errors)
-            )
-
-        # Reset all task statuses
-        for task in self._tasks.values():
-            task.reset()
-
-        results: dict[str, TaskResult] = {}
-        failed_tasks: list[str] = []
-        skipped: set[str] = set()
-
-        # Build in-degree and reverse-adjacency for wave-based scheduling
-        in_degree: dict[str, int] = {}
-        dependents: dict[str, list[str]] = {n: [] for n in self._tasks}
-        for name, task in self._tasks.items():
-            in_degree[name] = len(task.deps)
-            for dep in task.deps:
-                dependents[dep].append(name)
-
-        ready: list[str] = [n for n, d in in_degree.items() if d == 0]
-
-        wf_start = time.perf_counter()
-
-        with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
-            while ready:
-                # Submit all currently-ready tasks in parallel
-                future_to_name = {
-                    executor.submit(
-                        self._tasks[name].execute, context
-                    ): name
-                    for name in ready
-                    if name not in skipped
-                }
-                ready = []
-
-                for future in as_completed(future_to_name):
-                    name = future_to_name[future]
-                    result: TaskResult = future.result()
-                    results[name] = result
-
-                    if not result.success:
-                        failed_tasks.append(name)
-                        # Transitively skip dependents
-                        self._mark_skipped(name, dependents, skipped, results)
-                    else:
-                        # Decrement in-degree of dependents; queue those ready
-                        for dep_name in dependents[name]:
-                            if dep_name in skipped:
-                                continue
-                            in_degree[dep_name] -= 1
-                            if in_degree[dep_name] == 0:
-                                ready.append(dep_name)
-
-        wf_duration_ms = round((time.perf_counter() - wf_start) * 1000, 3)
-
-        return WorkflowResult(
-            success=len(failed_tasks) == 0,
-            task_results=results,
-            duration_ms=wf_duration_ms,
-            failed_tasks=failed_tasks,
-        )
-
-    # ------------------------------------------------------------------ #
-    # Internals
-    # ------------------------------------------------------------------ #
-
-    @staticmethod
-    def _mark_skipped(
-        failed: str,
-        dependents: dict[str, list[str]],
-        skipped: set[str],
-        results: dict[str, TaskResult],
-    ) -> None:
-        """Recursively mark all tasks that depend on *failed* as skipped."""
-        queue = list(dependents.get(failed, []))
-        while queue:
-            dep_name = queue.pop()
-            if dep_name in skipped:
-                continue
-            skipped.add(dep_name)
-            results[dep_name] = TaskResult(
-                task_name=dep_name,
-                success=False,
-                output=None,
-                error=f"Skipped: upstream task '{failed}' failed.",
-                duration_ms=0.0,
-            )
-            queue.extend(dependents.get(dep_name, []))
+    def _validate(self) -> None:
+        """Check for missing dependencies (fail-fast before execution)."""
+        names = set(self._steps)
+        for step in self._steps.values():
+            for dep in step.depends_on:
+                if dep not in names:
+                    raise ValueError(
+                        f"Step '{step.name}' depends on unknown step '{dep}'."
+                    )
 
     def __repr__(self) -> str:
-        return f"Workflow(name={self._name!r}, tasks={list(self._tasks)!r})"
+        return f"Workflow(name={self.name!r}, steps={list(self._steps)})"

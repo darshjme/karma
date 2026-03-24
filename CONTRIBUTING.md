@@ -1,38 +1,31 @@
 # Contributing to agent-workflow
 
-Thank you for your interest in contributing! Please follow these guidelines.
+Thank you for your interest in contributing!
 
-## Development Setup
+## Getting Started
 
 ```bash
-git clone https://github.com/your-org/agent-workflow.git
+git clone https://github.com/your-org/agent-workflow
 cd agent-workflow
-python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
 ## Running Tests
 
 ```bash
-python -m pytest tests/ -v --cov=agent_workflow
+python -m pytest tests/ -v
 ```
 
-All tests must pass before opening a pull request.
+## Guidelines
 
-## Code Style
-
-- Follow PEP 8.
-- Type-annotate all public functions.
-- Docstrings on all public classes and methods.
+- Keep zero runtime dependencies.
+- All new features must include tests.
+- Follow PEP 8 and add type hints.
+- Open an issue before large changes.
 
 ## Pull Request Process
 
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feat/my-feature`.
-3. Add tests for new behaviour.
-4. Run the full test suite — zero failures allowed.
-5. Open a PR against `main` with a clear description.
-
-## Commit Messages
-
-Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `test:`, `refactor:`.
+1. Fork and create a feature branch.
+2. Write tests for your changes.
+3. Ensure all tests pass.
+4. Submit a PR with a clear description.

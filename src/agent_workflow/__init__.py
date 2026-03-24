@@ -1,8 +1,9 @@
-"""agent-workflow: DAG-based workflow orchestration for LLM agents."""
+"""agent-workflow: Multi-step workflow orchestration for LLM agents."""
 
-from .task import Task, TaskResult
-from .workflow import Workflow, WorkflowResult
-from .dag import DAGValidator
+from .step import WorkflowStep
+from .workflow import Workflow
+from .engine import WorkflowEngine
+from .result import WorkflowResult
 
-__all__ = ["Task", "TaskResult", "Workflow", "WorkflowResult", "DAGValidator"]
-__version__ = "0.1.0"
+__version__ = "1.0.0"
+__all__ = ["WorkflowStep", "Workflow", "WorkflowEngine", "WorkflowResult"]
