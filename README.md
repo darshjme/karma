@@ -1,115 +1,102 @@
 <div align="center">
 
-<img src="assets/agent-workflow-hero.png" alt="agent-workflow — Vedic Arsenal by Darshankumar Joshi" width="100%" />
+<img src="assets/karma-hero.png" alt="कर्म — karma by Darshankumar Joshi" width="100%" />
 
-# 🌿 agent-workflow
+# ⚡ कर्म
+## `karma`
 
-<h3><em>कर्म</em></h3>
+> *Bhagavad Gita 3.5 — Karma Yoga*
 
-> *Karma — the sacred workflow of action*
+### Sacred Action — the central law of Gita
 
-**DAG-based workflow orchestration for LLM agents — topological sort, parallel execution, cycle detection, fault isolation. Zero dependencies.**
+**Workflow orchestration for LLM agents. DAG-based execution, parallel steps, checkpointing.**
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python)](https://python.org)
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen?style=flat-square)](https://github.com/darshjme/agent-workflow)
-[![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)](https://github.com/darshjme/agent-workflow/actions)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Vedic Arsenal](https://img.shields.io/badge/Vedic%20Arsenal-100%20libs-purple?style=flat-square)](https://github.com/darshjme/arsenal)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen?style=flat-square)](https://github.com/darshjme/karma)
+[![Vedic Arsenal](https://img.shields.io/badge/Vedic%20Arsenal-100%20libs-yellow?style=flat-square)](https://github.com/darshjme/arsenal)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-*Part of the [**Vedic Arsenal**](https://github.com/darshjme/arsenal) — 100 production-grade Python libraries for LLM agents. Zero dependencies. Battle-tested.*
+*Formerly `agent-workflow` — Part of the [**Vedic Arsenal**](https://github.com/darshjme/arsenal): 100 production-grade Python libraries for LLM agents, each named from the Vedas, Puranas, and Mahakavyas.*
 
 </div>
 
 ---
 
-## Overview
+## The Vedic Principle
 
-`agent-workflow` implements **dag-based workflow orchestration for llm agents — topological sort, parallel execution, cycle detection, fault isolation. zero dependencies.**
+*"Karmanye vadhikaraste ma phaleshu kadachana"* — Your right is to action alone, never to the fruits of action. — Bhagavad Gita 2.47
 
-Inspired by the Vedic principle of *कर्म* (Karma), this library brings the ancient wisdom of structured discipline to modern LLM agent engineering.
+This is the central law of existence, and it is the central principle of `karma` — the workflow engine.
 
-No external dependencies. Pure Python 3.8+. Drop it in anywhere.
+Each stage in the workflow has its dharma: its specific action, its specific responsibility. The pipeline does not concern itself with final outcomes — it executes each step with perfection and passes the result to the next stage. Budget enforcement, retry hooks, observability — all built into the sacred workflow of action, not outcome.
 
-## Installation
-
-```bash
-pip install agent-workflow
-```
-
-Or clone directly:
-```bash
-git clone https://github.com/darshjme/agent-workflow.git
-cd agent-workflow
-pip install -e .
-```
+---
 
 ## How It Works
 
 ```mermaid
 flowchart LR
-    A[Input] --> B[agent-workflow]
-    B --> C{Process}
-    C -- Success --> D[Output]
-    C -- Error --> E[Handle / Retry]
-    E --> B
-    style B fill:#6b21a8,color:#fff
-    note["Workflow — Zero Dependencies"]
+    A[Input] --> B[Stage 1]
+    B --> C[Stage 2]
+    C --> D[LLM Call]
+    D --> E[Stage 4]
+    E --> F[Output]
+    B & C & D & E --> G[Budget Check]
+    style D fill:#f59e0b,color:#000
+```
+
+---
+
+## Installation
+
+```bash
+pip install karma
+```
+
+Or from source:
+```bash
+git clone https://github.com/darshjme/karma.git
+cd karma && pip install -e .
 ```
 
 ## Quick Start
 
 ```python
-from workflow import *
+from karma import *
 
-# Initialize
-# See examples/ for full usage patterns
+# See examples/ for full usage
 ```
 
-## Why `agent-workflow`?
-
-Production LLM systems fail in predictable ways. `agent-workflow` solves the **workflow** failure mode with:
-
-- **Zero dependencies** — no version conflicts, no bloat
-- **Battle-tested patterns** — extracted from real production systems
-- **Type-safe** — full type hints, mypy-compatible
-- **Minimal surface area** — one job, done well
-- **Composable** — works with any LLM framework (LangChain, LlamaIndex, raw OpenAI, etc.)
+---
 
 ## The Vedic Arsenal
 
-`agent-workflow` is part of **[darshjme/arsenal](https://github.com/darshjme/arsenal)** — a collection of 100 focused Python libraries for LLM agent infrastructure.
+`karma` is one of 100 libraries in **[darshjme/arsenal](https://github.com/darshjme/arsenal)** — each named from sacred Indian literature:
 
-Each library solves exactly one problem. Together they form a complete stack.
+| Sanskrit Name | Source | Technical Function |
+|---|---|---|
+| `karma` | Bhagavad Gita 3.5 — Karma Yoga | Sacred Action — the central law of Gita |
 
-```
-pip install agent-workflow  # this library
-# Browse all 100: https://github.com/darshjme/arsenal
-```
+Each library solves one problem. Zero external dependencies. Pure Python 3.8+.
+
+---
 
 ## Contributing
 
-Found a bug? Have an improvement?
-
 1. Fork the repo
-2. Create a feature branch (`git checkout -b fix/your-fix`)
-3. Add tests
+2. Create feature branch (`git checkout -b fix/your-fix`)  
+3. Add tests — zero dependencies only
 4. Open a PR
-
-All contributions welcome. Keep it zero-dependency.
-
-## License
-
-MIT — use freely, build freely.
 
 ---
 
 <div align="center">
 
-**Built with 🌿 by [Darshankumar Joshi](https://github.com/darshjme)** · [@thedarshanjoshi](https://twitter.com/thedarshanjoshi)
+**⚡ Built by [Darshankumar Joshi](https://github.com/darshjme)** · [@thedarshanjoshi](https://twitter.com/thedarshanjoshi)
 
 *"कर्मण्येवाधिकारस्ते मा फलेषु कदाचन"*
-*Your right is to action alone, never to the fruits thereof.*
+*Your right is to action alone, never to its fruits. — Bhagavad Gita 2.47*
 
-[Arsenal](https://github.com/darshjme/arsenal) · [GitHub](https://github.com/darshjme) · [Twitter](https://twitter.com/thedarshanjoshi)
+[Vedic Arsenal](https://github.com/darshjme/arsenal) · [GitHub](https://github.com/darshjme) · [Twitter](https://twitter.com/thedarshanjoshi)
 
 </div>
