@@ -1,18 +1,32 @@
 <div align="center">
-<img src="assets/hero.svg" width="100%"/>
+
+<img src="assets/agent-workflow-hero.png" alt="agent-workflow — Vedic Arsenal" width="100%" />
+
+# 🌿 agent-workflow
+
+### *कर्म* — Karma — the sacred workflow of action
+
+**DAG-based workflow orchestration for LLM agents — topological sort, parallel execution, cycle detection, fault isolation. Zero dependencies.**
+
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python)](https://python.org)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen?style=flat-square)](https://github.com/darshjme/agent-workflow)
+[![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)](https://github.com/darshjme/agent-workflow/actions)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![Vedic Arsenal](https://img.shields.io/badge/Vedic%20Arsenal-100%20libs-purple?style=flat-square)](https://github.com/darshjme/arsenal)
+
+*Part of the [**Vedic Arsenal**](https://github.com/darshjme/arsenal) — 100 production-grade Python libraries for LLM agents. Zero dependencies. Battle-tested.*
+
 </div>
-
-# agent-workflow
-
-**Multi-step workflow orchestration for LLM agents**
-
-[![PyPI version](https://img.shields.io/pypi/v/agent-workflow?color=blue&style=flat-square)](https://pypi.org/project/agent-workflow/) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://python.org) [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE) [![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square)](#)
 
 ---
 
-## The Problem
+## Overview
 
-Without orchestration, multi-step agent pipelines degenerate into tangled callback chains — steps run out of order, failed tasks block downstream work silently, and retrying a half-completed run means starting from scratch. Debugging becomes archaeology.
+`agent-workflow` implements **dag-based workflow orchestration for llm agents — topological sort, parallel execution, cycle detection, fault isolation. zero dependencies.**
+
+Inspired by the Vedic principle of *कर्म* (Karma), this library brings the ancient wisdom of structured discipline to modern LLM agent engineering.
+
+No external dependencies. Pure Python 3.8+. Drop it in anywhere.
 
 ## Installation
 
@@ -20,88 +34,67 @@ Without orchestration, multi-step agent pipelines degenerate into tangled callba
 pip install agent-workflow
 ```
 
+Or clone directly:
+```bash
+git clone https://github.com/darshjme/agent-workflow.git
+cd agent-workflow
+pip install -e .
+```
+
 ## Quick Start
 
 ```python
-from agent_workflow import DAGValidator, WorkflowEngine, WorkflowResult
+from workflow import *
 
-# Initialise
-instance = DAGValidator(name="my_agent")
-
-# Use
-result = instance.run()
-print(result)
+# Initialize
+# See examples/ for full usage patterns
 ```
 
-## API Reference
+## Why `agent-workflow`?
 
-### `DAGValidator`
+Production LLM systems fail in predictable ways. `agent-workflow` solves the **workflow** failure mode with:
 
-```python
-class DAGValidator:
-    """Validates and sorts a directed acyclic graph of tasks.
-    def has_cycle(tasks: dict) -> bool:
-        """Return ``True`` if the dependency graph contains a cycle.
+- **Zero dependencies** — no version conflicts, no bloat
+- **Battle-tested patterns** — extracted from real production systems
+- **Type-safe** — full type hints, mypy-compatible
+- **Minimal surface area** — one job, done well
+- **Composable** — works with any LLM framework (LangChain, LlamaIndex, raw OpenAI, etc.)
+
+## The Vedic Arsenal
+
+`agent-workflow` is part of **[darshjme/arsenal](https://github.com/darshjme/arsenal)** — a collection of 100 focused Python libraries for LLM agent infrastructure.
+
+Each library solves exactly one problem. Together they form a complete stack.
+
+```
+pip install agent-workflow  # this library
+# Browse all 100: https://github.com/darshjme/arsenal
 ```
 
-### `WorkflowEngine`
+## Contributing
 
-```python
-class WorkflowEngine:
-    """Executes a Workflow, respecting dependencies and conditions."""
-    def __init__(self, workflow: Workflow) -> None:
-    def run(self, context: dict | None = None) -> WorkflowResult:
-        """Execute the full workflow and return a WorkflowResult."""
-```
+Found a bug? Have an improvement?
 
-### `WorkflowResult`
+1. Fork the repo
+2. Create a feature branch (`git checkout -b fix/your-fix`)
+3. Add tests
+4. Open a PR
 
-```python
-class WorkflowResult:
-    """Immutable record of a completed workflow run."""
-    def to_dict(self) -> dict:
-    def __repr__(self) -> str:
-```
+All contributions welcome. Keep it zero-dependency.
 
+## License
 
-## How It Works
-
-### Flow
-
-```mermaid
-flowchart LR
-    A[User Code] -->|create| B[DAGValidator]
-    B -->|configure| C[WorkflowEngine]
-    C -->|execute| D{Success?}
-    D -->|yes| E[Return Result]
-    D -->|no| F[Error Handler]
-    F --> G[Fallback / Retry]
-    G --> C
-```
-
-### Sequence
-
-```mermaid
-sequenceDiagram
-    participant App
-    participant DAGValidator
-    participant WorkflowEngine
-
-    App->>+DAGValidator: initialise()
-    DAGValidator->>+WorkflowEngine: configure()
-    WorkflowEngine-->>-DAGValidator: ready
-    App->>+DAGValidator: run(context)
-    DAGValidator->>+WorkflowEngine: execute(context)
-    WorkflowEngine-->>-DAGValidator: result
-    DAGValidator-->>-App: WorkflowResult
-```
-
-## Philosophy
-
-> Like the *karma-yoga* of the Gita — act without attachment to outcome; each step performs its duty and passes the torch.
+MIT — use freely, build freely.
 
 ---
 
-*Part of the [arsenal](https://github.com/darshjme/arsenal) — production stack for LLM agents.*
+<div align="center">
 
-*Built by [Darshankumar Joshi](https://github.com/darshjme), Gujarat, India.*
+**Built with 🌿 by [Darshankumar Joshi](https://github.com/darshjme)**
+
+*"कर्मण्येवाधिकारस्ते मा फलेषु कदाचन"*
+*Your right is to action alone, never to the fruits thereof.*
+
+[Arsenal](https://github.com/darshjme/arsenal) · [GitHub](https://github.com/darshjme) · [Twitter](https://twitter.com/thedarshanjoshi)
+
+</div>
